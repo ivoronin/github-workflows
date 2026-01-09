@@ -30,7 +30,7 @@ jobs:
 
       - name: Check if should tag (auto-update)
         id: check-autoupdate
-        if: inputs.autoupdate && github.event.pull_request.user.login == 'github-actions[bot]' && contains(github.event.pull_request.labels.*.name, 'auto-update')
+        if: inputs.autoupdate && contains(github.event.pull_request.labels.*.name, 'auto-update') && (github.event.pull_request.user.login == 'github-actions[bot]' || github.event.pull_request.user.login == github.repository_owner)
         run: echo "should_tag=true" >> $GITHUB_OUTPUT
 
       - uses: actions/checkout@v6
