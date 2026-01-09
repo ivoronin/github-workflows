@@ -77,6 +77,7 @@ jobs:
           token: ${{ secrets.HOMEBREW_TOKEN }}
           tap: ${{ github.repository_owner }}/homebrew-${{ github.repository_owner }}
           formula: ${{ github.event.repository.name }}
+          no_fork: true
 
       - name: Update Krew index
         if: inputs.krew
