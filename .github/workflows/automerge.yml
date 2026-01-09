@@ -37,7 +37,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   autoupdate:
-    if: inputs.autoupdate && github.event.pull_request.user.login == 'github-actions[bot]' && contains(github.event.pull_request.labels.*.name, 'auto-update')
+    if: inputs.autoupdate && contains(github.event.pull_request.labels.*.name, 'auto-update') && (github.event.pull_request.user.login == 'github-actions[bot]' || github.event.pull_request.user.login == github.repository_owner)
     runs-on: ubuntu-latest
     steps:
       - name: Auto-merge auto-update PR
