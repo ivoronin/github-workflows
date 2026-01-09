@@ -24,7 +24,8 @@ jobs:
         if: inputs.language == 'go'
         uses: golangci/golangci-lint-action@v6
         with:
-          args: --version
+          version-file: .tool-versions
+          install-only: true
 
       - name: Set up Python (uv)
         if: inputs.language == 'python'
