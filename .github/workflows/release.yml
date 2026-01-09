@@ -41,6 +41,12 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Install GoReleaser
+        if: inputs.language == 'go'
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          install-only: true
+
       - name: Set up Python (uv)
         if: inputs.language == 'python'
         uses: astral-sh/setup-uv@v7
