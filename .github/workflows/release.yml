@@ -84,12 +84,15 @@ jobs:
 
       - name: Update Homebrew tap
         if: inputs.brew
-        uses: dawidd6/action-homebrew-bump-formula@v7
+        uses: mislav/bump-homebrew-formula-action@v3
         with:
-          token: ${{ secrets.HOMEBREW_TOKEN }}
-          tap: ${{ github.repository_owner }}/homebrew-${{ github.repository_owner }}
-          formula: ${{ github.event.repository.name }}
-          no_fork: true
+          formula-name: ${{ github.event.repository.name }}
+          homebrew-tap: ${{ github.repository_owner }}/homebrew-${{ github.repository_owner }}
+          tag-name: ${{ github.ref_name }}
+          download-url: https://github.com/${{ github.repository }}/archive/refs/tags/${{ github.ref_name }}.tar.gz
+          create-pullrequest: false
+        env:
+          COMMITTER_TOKEN: ${{ secrets.HOMEBREW_TOKEN }}
 
       - name: Update Krew index
         if: inputs.krew
