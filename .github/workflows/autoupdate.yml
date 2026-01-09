@@ -7,10 +7,10 @@ on:
         description: 'Programming language (go or python)'
         required: true
         type: string
-
-permissions:
-  contents: write
-  pull-requests: write
+    secrets:
+      PAT_TOKEN:
+        description: 'PAT for creating PRs (to trigger test workflow)'
+        required: true
 
 jobs:
   autoupdate:
@@ -44,7 +44,7 @@ jobs:
         if: steps.changes.outputs.has_changes == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN }}
           commit-message: "chore: auto-update"
           title: "chore: auto-update"
           body: "Automated update created by autoupdate workflow."
