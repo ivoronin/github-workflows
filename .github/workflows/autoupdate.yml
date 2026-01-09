@@ -26,7 +26,7 @@ jobs:
 
       - name: Set up Python (uv)
         if: inputs.language == 'python'
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v7
 
       - name: Run update
         run: make update
