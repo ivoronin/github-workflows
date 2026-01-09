@@ -33,7 +33,7 @@ jobs:
         if: inputs.autoupdate && github.event.pull_request.user.login == 'github-actions[bot]' && contains(github.event.pull_request.labels.*.name, 'auto-update')
         run: echo "should_tag=true" >> $GITHUB_OUTPUT
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         if: steps.check-dependabot.outputs.should_tag == 'true' || steps.check-autoupdate.outputs.should_tag == 'true'
         with:
           token: ${{ secrets.PAT_TOKEN }}
