@@ -1,0 +1,64 @@
+name: Auto-tag
+
+on:
+  workflow_call:
+    inputs:
+      dependabot:
+        description: 'Tag after Dependabot PR merge'
+        required: false
+        type: boolean
+        default: false
+      autoupdate:
+        description: 'Tag after auto-update PR merge'
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      PAT_TOKEN:
+        description: 'PAT for pushing tags (to trigger release workflow)'
+        required: true
+
+jobs:
+  autotag:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if should tag (Dependabot)
+        id: check-dependabot
+        if: inputs.dependabot && github.event.pull_request.user.login == 'dependabot[bot]'
+        run: echo "should_tag=true" >> $GITHUB_OUTPUT
+
+      - name: Check if should tag (auto-update)
+        id: check-autoupdate
+        if: inputs.autoupdate && github.event.pull_request.user.login == 'github-actions[bot]' && contains(github.event.pull_request.labels.*.name, 'auto-update')
+        run: echo "should_tag=true" >> $GITHUB_OUTPUT
+
+      - uses: actions/checkout@v4
+        if: steps.check-dependabot.outputs.should_tag == 'true' || steps.check-autoupdate.outputs.should_tag == 'true'
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
+
+      - name: Generate CalVer tag
+        if: steps.check-dependabot.outputs.should_tag == 'true' || steps.check-autoupdate.outputs.should_tag == 'true'
+        id: calver
+        run: |
+          BASE_TAG="v$(date +%Y.%m.%d)"
+
+          # Check if tag exists, append suffix if needed
+          SUFFIX=""
+          COUNTER=1
+          while git tag -l "${BASE_TAG}${SUFFIX}" | grep -q .; do
+            SUFFIX="-${COUNTER}"
+            COUNTER=$((COUNTER + 1))
+          done
+
+          echo "tag=${BASE_TAG}${SUFFIX}" >> $GITHUB_OUTPUT
+
+      - name: Create and push tag
+        if: steps.check-dependabot.outputs.should_tag == 'true' || steps.check-autoupdate.outputs.should_tag == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.calver.outputs.tag }}" -m "Release ${{ steps.calver.outputs.tag }}"
+          git push origin "${{ steps.calver.outputs.tag }}"

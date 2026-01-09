@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      language:
+        description: 'Programming language (go or python)'
+        required: true
+        type: string
+      docker:
+        description: 'Build and push to GHCR'
+        required: false
+        type: boolean
+        default: false
+      brew:
+        description: 'Update Homebrew tap'
+        required: false
+        type: boolean
+        default: true
+      krew:
+        description: 'Update Krew index'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        if: inputs.language == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Python (uv)
+        if: inputs.language == 'python'
+        uses: astral-sh/setup-uv@v5
+
+      - name: Build release
+        run: make release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to GHCR
+        if: inputs.docker
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        if: inputs.docker
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            VERSION=${{ github.ref_name }}
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.ref_name }}
+            ghcr.io/${{ github.repository }}:latest
+
+      - name: Update Homebrew tap
+        if: inputs.brew
+        uses: dawidd6/action-homebrew-bump-formula@v4
+        with:
+          token: ${{ secrets.HOMEBREW_TOKEN }}
+          tap: ${{ github.repository_owner }}/homebrew-${{ github.repository_owner }}
+          formula: ${{ github.event.repository.name }}
+
+      - name: Update Krew index
+        if: inputs.krew
+        uses: rajatjindal/krew-release-bot@v0.0.46

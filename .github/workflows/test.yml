@@ -1,0 +1,28 @@
+name: Test
+
+on:
+  workflow_call:
+    inputs:
+      language:
+        description: 'Programming language (go or python)'
+        required: true
+        type: string
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        if: inputs.language == 'go'
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Python (uv)
+        if: inputs.language == 'python'
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run tests
+        run: make test-all
