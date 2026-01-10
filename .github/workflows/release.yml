@@ -98,4 +98,4 @@ jobs:
 
       - name: Update Krew index
         if: inputs.krew
-        uses: rajatjindal/krew-release-bot@v0.0.46
+        uses: rajatjindal/krew-release-bot@v0.0.47
