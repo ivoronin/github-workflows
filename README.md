@@ -26,7 +26,7 @@ jobs:
   test:
     uses: ivoronin/github-workflows/.github/workflows/test.yml@main
     with:
-      language: go  # or python
+      language: go  # or python or swift
 ```
 
 ### release.yml
@@ -40,7 +40,7 @@ jobs:
   release:
     uses: ivoronin/github-workflows/.github/workflows/release.yml@main
     with:
-      language: go
+      language: go    # or python or swift
       docker: false   # Build and push to GHCR
       brew: true      # Update Homebrew tap
       krew: false     # Update Krew index
@@ -75,7 +75,7 @@ jobs:
   autoupdate:
     uses: ivoronin/github-workflows/.github/workflows/autoupdate.yml@main
     with:
-      language: go
+      language: go  # or python or swift
     secrets: inherit
 ```
 
@@ -94,6 +94,10 @@ jobs:
       autoupdate: true
     secrets: inherit  # Requires PAT_TOKEN secret
 ```
+
+## Notes
+
+- Swift workflows run on `macos-latest` where Swift and SwiftLint are pre-installed.
 
 ## Required Secrets
 

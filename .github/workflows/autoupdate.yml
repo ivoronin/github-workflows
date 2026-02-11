@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       language:
-        description: 'Programming language (go or python)'
+        description: 'Programming language (go, python, or swift)'
         required: true
         type: string
     secrets:
@@ -14,7 +14,7 @@ on:
 
 jobs:
   autoupdate:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.language == 'swift' && 'macos-latest' || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v6
 

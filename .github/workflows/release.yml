@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       language:
-        description: 'Programming language (go or python)'
+        description: 'Programming language (go, python, or swift)'
         required: true
         type: string
       docker:
@@ -35,7 +35,7 @@ jobs:
 
   release:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.language == 'swift' && 'macos-latest' || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -62,6 +62,12 @@ jobs:
         run: make release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        if: inputs.language == 'swift'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
 
       - name: Login to GHCR
         if: inputs.docker
