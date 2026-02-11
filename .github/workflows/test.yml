@@ -7,10 +7,14 @@ on:
         description: 'Programming language (go, python, or swift)'
         required: true
         type: string
+      runner:
+        description: 'Override runner image (default: macos-latest for swift, ubuntu-latest otherwise)'
+        required: false
+        type: string
 
 jobs:
   test:
-    runs-on: ${{ inputs.language == 'swift' && 'macos-latest' || 'ubuntu-latest' }}
+    runs-on: ${{ inputs.runner || (inputs.language == 'swift' && 'macos-latest' || 'ubuntu-latest') }}
     steps:
       - uses: actions/checkout@v6
 
