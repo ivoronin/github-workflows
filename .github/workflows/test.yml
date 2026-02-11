@@ -31,5 +31,12 @@ jobs:
         if: inputs.language == 'python'
         uses: astral-sh/setup-uv@v7
 
+      - name: Install SwiftLint
+        if: inputs.language == 'swift'
+        run: |
+          SWIFTLINT_VERSION=$(awk '/^swiftlint / {print $2}' .tool-versions)
+          curl -sL "https://github.com/realm/SwiftLint/releases/download/${SWIFTLINT_VERSION}/portable_swiftlint.zip" -o /tmp/swiftlint.zip
+          unzip -q /tmp/swiftlint.zip -d /usr/local/bin
+
       - name: Run tests
         run: make test-all
