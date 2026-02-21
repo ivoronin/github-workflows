@@ -22,10 +22,20 @@ on:
         required: false
         type: boolean
         default: false
+      gpg:
+        description: 'Import GPG key and sign release artifacts'
+        required: false
+        type: boolean
+        default: false
       runner:
         description: 'Override runner image (default: macos-latest for swift, ubuntu-latest otherwise)'
         required: false
         type: string
+    secrets:
+      GPG_PRIVATE_KEY:
+        required: false
+      PASSPHRASE:
+        required: false
 
 permissions:
   contents: write
@@ -63,10 +73,19 @@ jobs:
         if: inputs.language == 'python'
         uses: astral-sh/setup-uv@v7
 
+      - name: Import GPG key
+        id: gpg
+        if: inputs.gpg
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PASSPHRASE }}
+
       - name: Build release
         run: make release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GPG_FINGERPRINT: ${{ steps.gpg.outputs.fingerprint }}
 
       - name: Create GitHub Release
         if: inputs.language == 'swift'
