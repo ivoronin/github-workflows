@@ -116,7 +116,7 @@ jobs:
 
       - name: Update Homebrew tap
         if: inputs.brew
-        uses: mislav/bump-homebrew-formula-action@v3
+        uses: mislav/bump-homebrew-formula-action@v4
         with:
           formula-name: ${{ github.event.repository.name }}
           homebrew-tap: ${{ github.repository_owner }}/homebrew-${{ github.repository_owner }}
