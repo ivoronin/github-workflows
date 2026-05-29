@@ -1,0 +1,91 @@
+name: Auto-release
+
+on:
+  workflow_call:
+    inputs:
+      language:
+        description: 'Programming language (go, python, or swift)'
+        required: true
+        type: string
+    secrets:
+      PAT_TOKEN:
+        description: 'PAT for the data-update PR (triggers test) and the release tag (triggers release)'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # Scheduled: regenerate embedded data; if it changed, open a PR and auto-merge it
+  # once `test / test` passes (keeps branch protection intact).
+  update:
+    if: github.event_name != 'pull_request_target'
+    runs-on: ${{ inputs.language == 'swift' && 'macos-latest' || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Go
+        if: inputs.language == 'go'
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Python (uv)
+        if: inputs.language == 'python'
+        uses: astral-sh/setup-uv@v7
+
+      - name: Run update
+        run: make update
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Pull Request
+        id: pr
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          commit-message: "chore: auto-update"
+          title: "chore: auto-update"
+          body: "Automated data refresh. Auto-merges once `test / test` passes, then a CalVer release is tagged."
+          branch: auto-update
+          labels: auto-update
+          delete-branch: true
+
+      - name: Enable auto-merge
+        if: steps.pr.outputs.pull-request-number
+        run: gh pr merge --auto --squash "${{ steps.pr.outputs.pull-request-number }}"
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+
+  # On the auto-update PR merging: tag a CalVer release, which triggers release.yml.
+  tag:
+    if: github.event_name == 'pull_request_target' && github.event.pull_request.merged == true && contains(github.event.pull_request.labels.*.name, 'auto-update')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.PAT_TOKEN }}
+          fetch-depth: 0
+
+      - name: Tag CalVer release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          Y=$(date +%Y); M=$(date +%m); D=$(date +%d)
+          n=$((10#$D))
+          tag=$(printf "v%s.%s.%02d" "$Y" "$M" "$n")
+          # same-day collision: increment the day field (DD acts as a patch counter)
+          while git rev-parse -q --verify "refs/tags/$tag" >/dev/null; do
+            n=$((n + 1)); tag=$(printf "v%s.%s.%02d" "$Y" "$M" "$n"); \
+          done
+          git tag -a "$tag" -m "Release $tag"
+          git push origin "$tag"

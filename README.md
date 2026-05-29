@@ -8,9 +8,7 @@ Reusable GitHub Actions workflows for @ivoronin projects.
 |----------|---------|---------|
 | `test.yml` | `workflow_call` | Run `make test-all` |
 | `release.yml` | `workflow_call` | Build release, publish to brew/docker/krew |
-| `autoupdate.yml` | `workflow_call` | Run `make update`, create PR |
-| `automerge.yml` | `workflow_call` | Auto-merge Dependabot/autoupdate PRs |
-| `autotag.yml` | `workflow_call` | Create CalVer tag after PR merge |
+| `autorelease.yml` | `workflow_call` | Data-embedding tools: `make update` → PR → auto-merge → CalVer tag → release |
 
 ## Usage
 
@@ -47,52 +45,26 @@ jobs:
     secrets: inherit
 ```
 
-### automerge.yml
+### autorelease.yml (data-embedding projects)
+
+Regenerates embedded data on a schedule; if it changed, opens a PR that auto-merges once
+`test / test` passes, then tags a CalVer release (which triggers `release.yml`). Requires
+repo auto-merge enabled and a `PAT_TOKEN` secret.
 
 ```yaml
-name: Auto-merge
-on:
-  pull_request:
-    types: [opened, synchronize, reopened, labeled]
-jobs:
-  automerge:
-    uses: ivoronin/github-workflows/.github/workflows/automerge.yml@main
-    with:
-      dependabot: true   # Auto-merge Dependabot minor/patch
-      autoupdate: false  # Auto-merge auto-update PRs
-    secrets: inherit
-```
-
-### autoupdate.yml (autorelease projects)
-
-```yaml
-name: Auto-update
+name: Auto-release
 on:
   schedule:
     - cron: '0 0 * * 0'  # weekly
   workflow_dispatch:
-jobs:
-  autoupdate:
-    uses: ivoronin/github-workflows/.github/workflows/autoupdate.yml@main
-    with:
-      language: go  # or python or swift
-    secrets: inherit
-```
-
-### autotag.yml (autorelease projects)
-
-```yaml
-name: Auto-tag
-on:
-  pull_request:
+  pull_request_target:
     types: [closed]
 jobs:
-  autotag:
-    uses: ivoronin/github-workflows/.github/workflows/autotag.yml@main
+  autorelease:
+    uses: ivoronin/github-workflows/.github/workflows/autorelease.yml@main
     with:
-      dependabot: false
-      autoupdate: true
-    secrets: inherit  # Requires PAT_TOKEN secret
+      language: go  # or python or swift
+    secrets: inherit  # requires PAT_TOKEN
 ```
 
 ## Notes
@@ -104,11 +76,11 @@ jobs:
 | Secret | Required For | Purpose |
 |--------|--------------|---------|
 | `HOMEBREW_TOKEN` | `release.yml` (brew: true) | Push to Homebrew tap |
-| `PAT_TOKEN` | `autotag.yml` | Push tags that trigger release workflow |
+| `PAT_TOKEN` | `autorelease.yml` | Create/merge the data PR and push the release tag |
 
 ## Requirements
 
 Projects using these workflows must have:
 - `Makefile` with `test-all` and `release` targets
-- `make update` target (for autoupdate workflow)
-- Branch protection requiring `test` status check (for automerge)
+- `make update` target and repo auto-merge enabled (for `autorelease.yml`)
+- Branch protection requiring the `test / test` status check
