@@ -36,6 +36,8 @@ on:
         required: false
       PASSPHRASE:
         required: false
+      HOMEBREW_TOKEN:
+        required: false
 
 permissions:
   contents: write
@@ -51,6 +53,10 @@ jobs:
   release:
     needs: test
     runs-on: ${{ inputs.runner || (inputs.language == 'swift' && 'macos-latest' || 'ubuntu-latest') }}
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
