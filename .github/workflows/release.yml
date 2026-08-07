@@ -38,6 +38,8 @@ on:
         required: false
       HOMEBREW_TOKEN:
         required: false
+      UV_PUBLISH_TOKEN:
+        required: false
 
 permissions:
   contents: write
@@ -56,7 +58,6 @@ jobs:
     permissions:
       contents: write
       packages: write
-      id-token: write
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
@@ -92,6 +93,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.gpg.outputs.fingerprint }}
+          UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
 
       - name: Create GitHub Release
         if: inputs.language == 'swift'
